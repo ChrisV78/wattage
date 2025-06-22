@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vermogen per Roeier Calculator</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 2rem; max-width: 600px; margin: auto; }
+    label { display: block; margin-top: 1rem; }
+    input, select { width: 100%; padding: 0.5rem; margin-top: 0.25rem; }
+    .output { margin-top: 2rem; background: #f9f9f9; padding: 1rem; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <h1>Vermogen per Roeier</h1>
+
+  <label for="boat">Kies een sloep:</label>
+  <select id="boat">
+    <option value="">-- Selecteer --</option>
+    <option value="Schokland">Schokland</option>
+    <option value="Mare Australis">Mare Australis</option>
+  </select>
+
+  <label for="rowers">Aantal roeiers:</label>
+  <select id="rowers">
+    <option value="">-- Selecteer --</option>
+    <option value="6">6</option>
+    <option value="8">8</option>
+  </select>
+
+  <label for="aValue">A-waarde:</label>
+  <input type="number" step="0.01" id="aValue" />
+
+  <label for="bValue">B-waarde:</label>
+  <input type="number" step="0.01" id="bValue" />
+
+  <label for="distance">Afstand (meters):</label>
+  <input type="number" step="1" id="distance" placeholder="Bijv. 12300" />
+
+  <label for="time">Tijd (hh:mm:ss):</label>
+  <input type="text" id="time" placeholder="Bijv. 1:34:20" />
+
+  <button onclick="calculatePower()">Bereken vermogen</button>
+
+  <div class="output" id="result"></div>
+
+  <script>
+    const presets = {
+      "Schokland": {
+        "6": { A: 22.59, B: 3.46 },
+        "8": { A: 32.09, B: 4.23 },
+      },
+      "Mare Australis": {
+        "6": { A: 17.67, B: 3.04 },
+        "8": { A: 25.95, B: 3.57 },
+      },
+    };
+
+    document.getElementById('boat').addEventListener('change', fillDefaults);
+    document.getElementById('rowers').addEventListener('change', fillDefaults);
+
+    function fillDefaults() {
+      const boat = document.getElementById('boat').value;
+      const rowers = document.getElementById('rowers').value;
+
+      if (boat && rowers && presets[boat] && presets[boat][rowers]) {
+        document.getElementById('aValue').value = presets[boat][rowers].A;
+        document.getElementById('bValue').value = presets[boat][rowers].B;
+      }
+    }
+
+    function parseTimeToSeconds(timeStr) {
+      const parts = timeStr.split(':').map(Number);
+      if (parts.length === 3) {
+        return parts[0] * 3600 + parts[1] * 60 + parts[2];
+      } else if (parts.length === 2) {
+        return parts[0] * 60 + parts[1];
+      } else {
+        return parseFloat(timeStr); // fallback
+      }
+    }
+
+    function calculatePower() {
+      const distance = parseFloat(document.getElementById('distance').value);
+      const time = parseTimeToSeconds(document.getElementById('time').value);
+      const rowers = parseInt(document.getElementById('rowers').value);
+      const A = parseFloat(document.getElementById('aValue').value);
+      const B = parseFloat(document.getElementById('bValue').value);
+
+      if (!distance || !time || !rowers || !A || !B) {
+        document.getElementById('result').innerHTML = '<strong>Vul alle benodigde velden correct in.</strong>';
+        return;
+      }
+
+      const v = distance / time; // m/s
+      const CW = A / (1 - Math.pow(v / B, 2));
+      const P = (Math.pow(v, 3) * CW) / rowers;
+
+      document.getElementById('result').innerHTML =
+        `<p><strong>Snelheid:</strong> ${v.toFixed(3)} m/s</p>
+         <p><strong>Correctiewaarde (CW):</strong> ${CW.toFixed(2)}</p>
+         <p><strong>Vermogen per roeier:</strong> ${P.toFixed(2)} Watt</p>`;
+    }
+  </script>
+</body>
+</html>
